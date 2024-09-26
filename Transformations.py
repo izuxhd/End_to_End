@@ -1,6 +1,8 @@
 # Import SparkSession
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col,to_date
+from pyspark.sql import functions as F
+from  pyspark.sql.functions   import  col,to_date,regexp_replace
+from pyspark.sql.types import DoubleType,IntegerType
 import  pandas  as  pd
 
 
@@ -36,14 +38,20 @@ print(data_types)
 
 
 #Changing   data   types
-df=df.withColumn('Invoice Date',to_date(df['Invoice Date'],'yyyy-mm-dd'))
-
-print(type(col))
-df=df.withColumn('Price per Unit',col('Price per Unit').cast('float'))\
-.withColumn('Total Sales',col('Total Sales').cast('float')).withColumn('Price per Unit',col('Price per Unit').cast('float'))\
-      .withColumn('Units Sold',col('Units Sold').cast('float'))\
-      .withColumn('Operating Profit',col('Operating Profit').cast('float'))\
-      .withColumn('Operating Margin' ,col('Operating Margin').cast('float'))            
+df = df.withColumn('Invoice Date', to_date(F.col('Invoice Date'), 'yyyy-MM-dd')) \
+       .withColumn('Units Sold', regexp_replace(F.col('Units Sold'), ',', '')) \
+       .withColumn('Total Sales', regexp_replace(F.col('Total Sales'), '\\$', '')) \
+       .withColumn('Operating Profit', regexp_replace(F.col('Operating Profit'), '\\$', '')) \
+       .withColumn('Total Sales', regexp_replace(F.col('Total Sales'), ',', '')) \
+       .withColumn('Operating Profit', regexp_replace(F.col('Operating Profit'), ',', '')) \
+       .withColumn('Total Sales', F.col('Total Sales').cast(DoubleType())) \
+       .withColumn('Operating Profit' ,F.col('Operating Profit').cast(DoubleType())) \
+       .withColumn('Operating Margin',regexp_replace(F.col('Operating Margin'),'%','')) \
+       .withColumn('Operating Margin',F.col('Operating Margin').cast(IntegerType())) \
+       .withColumn('Price per Unit',regexp_replace(F.col('Price per Unit'),'\\$','')) \
+       .withColumn('Price per Unit',F.col('Price per Unit').cast(DoubleType()))     
 print(df.select('Price per Unit','Total Sales' ,'Price per Unit','Units Sold','Operating Profit','Operating Margin').dtypes)
 print(df.dtypes)
-      
+   
+
+
